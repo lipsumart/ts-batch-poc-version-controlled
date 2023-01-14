@@ -1,0 +1,31 @@
+{
+  "name": "ts-batch-poc-version-controlled",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@airgap/beacon-sdk": "^3.3.2",
+    "@next/font": "13.1.2",
+    "@taquito/beacon-wallet": "^15.0.1",
+    "@taquito/taquito": "^15.0.1",
+    "@taquito/utils": "^15.0.1",
+    "@types/node": "18.11.18",
+    "@types/react": "18.0.26",
+    "@types/react-dom": "18.0.10",
+    "bootstrap": "^5.2.3",
+    "eslint": "8.31.0",
+    "eslint-config-next": "13.1.2",
+    "graphql-request": "^5.1.0",
+    "next": "13.1.2",
+    "react": "18.2.0",
+    "react-bootstrap": "^2.7.0",
+    "react-dom": "18.2.0",
+    "swr": "^2.0.0",
+    "typescript": "4.9.4"
+  }
+}
