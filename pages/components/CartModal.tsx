@@ -1,4 +1,3 @@
-
 import Modal from "react-bootstrap/Modal";
 import Container from "react-bootstrap/Container";
 import Button from "react-bootstrap/Button";
@@ -7,10 +6,12 @@ import Row from "react-bootstrap/Row";
 import CloseButton from "react-bootstrap/CloseButton";
 
 import { BatchUnit } from "../types";
-import { DAppClientOptions } from '@airgap/beacon-sdk';
 
-export const CartModal = ({ onChange, show, onHideModal, cart, connect, activeAccount, checkout } : 
-    { onChange: Function; show: boolean; onHideModal: ()=>void; cart: BatchUnit[]; connect: () => void; activeAccount: any; checkout: () => void })=>{
+export const CartModal = ({ onChange, show, onHideModal, cart, connect, activeAccount, checkout, clearOrder } : 
+    { onChange: Function; show: boolean; onHideModal: () => boolean;
+      cart: BatchUnit[]; connect: () => void; activeAccount: any;
+      checkout: () => Promise<true | undefined>; clearOrder: () => void })=>{
+    
     return (
     <Modal show={show} onHide={onHideModal}>
       <Container>
@@ -35,7 +36,7 @@ export const CartModal = ({ onChange, show, onHideModal, cart, connect, activeAc
           <Button variant="secondary" onClick={onHideModal}>
             Close
           </Button>
-          <Button variant={!activeAccount ? "success" : "danger"} onClick={!activeAccount ? connect : checkout}>
+          <Button variant={!activeAccount ? "success" : "danger"} onClick={!activeAccount ? connect : async () => {await checkout() && onHideModal() && clearOrder()}}>
             {!activeAccount ? "Connect Wallet" : "Checkout"}
           </Button>
         </Modal.Footer>
