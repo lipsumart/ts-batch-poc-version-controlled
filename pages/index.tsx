@@ -21,6 +21,9 @@ import { SigningType } from "@airgap/beacon-sdk";
 import { useTezosContext } from './components/tezhooks/TezosContext';
 import { useBeaconWallet } from './components/tezhooks/use-beacon-wallet';
 import { disconnect } from "process";
+import { OpKind } from '@taquito/taquito';
+import {WalletParamsWithKind} from '@taquito/taquito';
+
 //import { TezosToolkit } from "@taquito/taquito";
 //import { BeaconWallet } from "@taquito/beacon-wallet";
 
@@ -40,7 +43,6 @@ export default function Home(){
   const [connectedAddress, setConnectedAddress] = useState<any>(null);
   const [signedResponse, setSignedResponse] = useState<any>(null);
   const [loadedOnce, setLoadedOnce] = useState<boolean>(false);
-  
 
   const fetcher = (query: string) => request("https://data.objkt.com/v3/graphql", query);
 
@@ -75,11 +77,107 @@ export default function Home(){
     balance, // holds the account's balance (for now it's not reactive)
     err, // string, not empty when there's an error
     clearErrors // can be called to clear the error
+
   } = useBeaconWallet();
 
-  //const objkt_mrkt_v2 = "KT1WvzYHCNBvDSdwafTHv7nJ1dWmZ8GCYuuC";
-  //const ask_id = 2842792;
-  //const proxy = null;
+  const objkt_mrkt_v2 = "KT1WvzYHCNBvDSdwafTHv7nJ1dWmZ8GCYuuC";
+  const objkt_mrkt_v1 = "KT1FvqJwEDWb1Gwc55Jd1jjTHRVWbYKUUpyq";
+
+  const teia_community_mrkt = "KT1PHubm9HtyQEJ4BBpMTVomq6mhbfNZ9z5w";
+
+  const fx_hash_mrkt_v2 = "KT1GbyoDi7H1sfXmimXpptZJuCdHMh66WS9u";
+  const fx_hash_mrkt_v1 = "KT1Xo5B7PNBAeynZPmca4bRh6LQow4og1Zb9"  
+
+  const hen_mrkt_v2 = "KT1HbQepzV1nVGg8QVznG7z4RcHseD5kwqBn";
+
+  const kalamint_art_house_mrkt = "KT1EpGgjQs73QfFJs9z7m1Mxm5MTnpC2tqse";
+
+  const checkout = async () => {
+    if (tezos){
+
+      console.log("Signing ...");
+      const input = "Sign to confirm batch purchase";
+
+      const formattedInput: string = ["Tezos Signed Message:", input].join(" ");
+
+      const bytes = char2Bytes(formattedInput);
+      const payloadBytes =
+        "05" + "0100" + char2Bytes(bytes.length.toString()) + bytes;
+
+      const Wallet = await getWallet();
+      const response = Wallet.client.requestSignPayload({
+        signingType: SigningType.MICHELINE,
+        payload: payloadBytes,
+        sourceAddress: address,
+      });
+
+      if (response){       
+        setSignedResponse(JSON.stringify(response));
+        console.log("Signed!");
+
+        const txs: WalletParamsWithKind[] = [];
+        console.log(cart[0].token.bigmap_key, " ", cart[0].token.price, " ", cart[0].token.marketplace_contract);
+
+        for (var i = 0; i < cart.length; i++){
+          var market = cart[i].token.marketplace_contract;       
+          const contract = await tezos.wallet.at(market);
+
+          
+          for (var j = 0; j < cart[i].count; j++){
+    
+            if (market === objkt_mrkt_v2 || market === objkt_mrkt_v1){
+              txs.push(
+                {
+                  kind: OpKind.TRANSACTION,
+                  ...contract.methods.fulfill_ask(cart[i].token.bigmap_key).toTransferParams({amount: cart[i].token.price, mutez: true, storageLimit: 100})
+        
+                }
+              )
+            }
+            else if (market === fx_hash_mrkt_v2){
+              txs.push(
+                {
+                  kind: OpKind.TRANSACTION,
+                  ...contract.methods.listing_accept(cart[i].token.bigmap_key).toTransferParams({amount: cart[i].token.price, mutez: true, storageLimit: 100})
+        
+                }
+              )
+            }
+            else if (market === fx_hash_mrkt_v1 || 
+                        market === hen_mrkt_v2 ||
+                        market === teia_community_mrkt){
+              txs.push(
+                {
+                  kind: OpKind.TRANSACTION,
+                  ...contract.methods.collect(cart[i].token.bigmap_key).toTransferParams({amount: cart[i].token.price, mutez: true, storageLimit: 100})
+        
+                }
+              )
+            } 
+            else if (market === kalamint_art_house_mrkt){
+              txs.push(
+                {
+                  kind: OpKind.TRANSACTION,
+                  ...contract.methods.buy(cart[i].token.bigmap_key).toTransferParams({amount: cart[i].token.price, mutez: true, storageLimit: 100})
+        
+                }
+              )
+            }        
+            else console.log("Market not recognized!");
+          }          
+        }
+
+        const batch = tezos.wallet.batch(txs); 
+
+        const batchOp = await batch.send();
+        return await batchOp.confirmation();
+      }
+      else {
+        console.log("Signing did not complete successfully.");
+        return;
+      }
+    }
+  };
 
   const onCartClick = () => {
     setCartModalStatus(true);
@@ -89,14 +187,8 @@ export default function Home(){
     setCartModalStatus(false);
   }
 
-  /*useEffect(()=>{
-    
-    connect({name: "Beacon"});
-
-  }, []);*/
-
   useEffect(()=>{
-    //console.log(target);
+    console.log(target);
 
     setBatch(cart.filter((b) => target === b.tgt));
 
@@ -129,61 +221,14 @@ export default function Home(){
 
   const handleClick = useCallback(async () => {
     try {
-
-      /*if (getWallet()){
-        console.log("Requesting permissions...");
-        await wallet.requestPermissions();
-        
-        const address = wallet.getPKH(); 
-        console.log("Got permissions:", address);
-        setConnectedAddress(address);
-      
-        const input = `Gallery uses this cryptographic signature in place of a password, verifying that you are the owner of this address: 12345678`;
-
-        const formattedInput: string = ["Tezos Signed Message:", input].join(" ");
-
-        const bytes = char2Bytes(formattedInput);
-        const payloadBytes =
-          "05" + "0100" + char2Bytes(bytes.length.toString()) + bytes;
-
-        const response = await wallet.client.requestSignPayload({
-          signingType: SigningType.MICHELINE,
-          payload: payloadBytes,
-          sourceAddress: connectedAddress,
-        });
-
-        setSignedResponse(JSON.stringify(response));*/
-
-        /*const tx = await dAppClient.requestOperation({
-          operationDetails: [
-            {
-              kind: TezosOperationType.TRANSACTION,
-              destination: 'tz1VuwFoPMkZpgQTijYcTNL8WzTCo6KMTkQd', // Send to ourselves
-              amount: "1", // Amount in mutez, the smallest unit in Tezos
-            },
-          ],
-        });*/
-        //setActiveAccount(await wallet.client.getActiveAccount());
-
-        //const contract = await Tezos.wallet.at(objkt_mrkt_v2);
-
-        //const result = await contract.methods.fulfill_ask(ask_id, proxy).send({amount: 1110000, mutez: true});
-
-      //}
-      connect({name: "Beacon"});
+      connect();
     } catch (error) {
       console.log("Got error:", error);
     }
-    //connect({name: "Beacon"});
-    
-
   }, []);
 
   const handleDisconnect = useCallback(async ()=> {
     try{
-      //dAppClient.disconnect();
-      //setActiveAccount(null);
-      //setConnectedAddress('');
       disconnect();
     }
     catch(error){
@@ -199,7 +244,8 @@ export default function Home(){
       </div>
       <TopBar cartTotal={batchCount} onSubmit={onSubmit} onCartClick={onCartClick}/>
       <DataMap data={data} batch={batch} onChange={onChange} target={target} error={error}/>
-      <CartModal onChange={onChange} show={cartModalStatus} onHideModal={onHideModal} cart={cart}/>
+      <CartModal onChange={onChange} show={cartModalStatus} onHideModal={onHideModal} cart={cart}
+      connect={connect} checkout={checkout} activeAccount={activeAccount}/>
     </Container>
   );
 };

@@ -7,10 +7,10 @@ import Row from "react-bootstrap/Row";
 import CloseButton from "react-bootstrap/CloseButton";
 
 import { BatchUnit } from "../types";
+import { DAppClientOptions } from '@airgap/beacon-sdk';
 
-
-export const CartModal = ({ onChange, show, onHideModal, cart } : 
-    { onChange: Function; show: boolean; onHideModal: ()=>void; cart: BatchUnit[] })=>{
+export const CartModal = ({ onChange, show, onHideModal, cart, connect, activeAccount, checkout } : 
+    { onChange: Function; show: boolean; onHideModal: ()=>void; cart: BatchUnit[]; connect: () => void; activeAccount: any; checkout: () => void })=>{
     return (
     <Modal show={show} onHide={onHideModal}>
       <Container>
@@ -35,8 +35,8 @@ export const CartModal = ({ onChange, show, onHideModal, cart } :
           <Button variant="secondary" onClick={onHideModal}>
             Close
           </Button>
-          <Button variant="primary" onClick={onHideModal}>
-            Save Changes
+          <Button variant={!activeAccount ? "success" : "danger"} onClick={!activeAccount ? connect : checkout}>
+            {!activeAccount ? "Connect Wallet" : "Checkout"}
           </Button>
         </Modal.Footer>
       </Container>

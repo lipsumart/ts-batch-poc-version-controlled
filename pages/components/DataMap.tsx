@@ -15,7 +15,7 @@ export const DataMap = ({ data, batch, onChange, target, error } : { data: Data 
     }
     else if (!data) return <div>Loading...</div>;
     else if (!error && data){
-      console.log(data.listing[0]);
+      //console.log(data.listing[0]);
       return (
         <Row>
           {data.listing.map((el, index, arr) => (

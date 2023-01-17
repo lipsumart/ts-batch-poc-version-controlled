@@ -25,9 +25,9 @@ export interface BeaconWalletHook {
   wallet: BeaconWallet | null;
   initialized: boolean;
   address: string;
-  connect: (options: DAppClientOptions) => void;
+  connect: () => void;
   disconnect: () => void;
-  getWallet: () => BeaconWallet;
+  getWallet: () => any;
   activeAccount: any;
   err: string;
   loading: boolean;

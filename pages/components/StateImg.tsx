@@ -2,13 +2,9 @@ import Image from "next/image";
 import { useState } from "react";
 
 export const StateImg = ({ src }: {src: string})=>{
-    const [width, setWidth] = useState("100%");
-    const [height, setHeight] = useState("100%");
-    return <Image height={Number(height)} width={Number(width)} alt=""
+    const [width, setWidth] = useState(150);
+    const [height, setHeight] = useState(150);
+    return <Image height={height} width={width} alt=""
       src={src}
-      onLoadingComplete={(obj)=>{
-        setWidth(obj.naturalWidth.toString());
-        setHeight(obj.naturalHeight.toString());
-      }
-    }></Image>
+      ></Image>
 }
